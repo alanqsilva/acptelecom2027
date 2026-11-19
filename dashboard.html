@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar de Mercado Pro - Alan Silva</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.25.2.min.js"></script>
+
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .clock-box { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(10px); border: 1px solid #334155; border-radius: 8px; padding: 8px 15px; text-align: center; box-shadow: 0 0 15px rgba(6, 182, 212, 0.1); transition: all 0.3s; min-width: 100px; }
+        .clock-box:hover { border-color: #06b6d4; }
+        .clock-label { font-size: 0.6rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+        .clock-time { font-family: 'Courier New', Courier, monospace; font-size: 1.5rem; font-weight: bold; letter-spacing: 2px; }
+        .clock-ac .clock-time { color: #38bdf8; }
+        .clock-sp .clock-time { color: #06b6d4; }
+        .clock-ny .clock-time { color: #eab308; }
+        
+        .tabela-mercado { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .tabela-mercado th { text-align: left; padding: 5px 6px; color: #94a3b8; font-size: 0.7rem; border-bottom: 1px solid #334155; }
+        .tabela-mercado td { padding: 4px 6px; border-bottom: 1px solid #1e293b; transition: background-color 0.3s; }
+        .tabela-mercado th:not(:first-child), .tabela-mercado td:not(:first-child) { text-align: right; }
+        
+        .row-alta { background-color: rgba(16, 185, 129, 0.05); }
+        .row-alta td { color: #10b981 !important; font-weight: 600; }
+        .row-baixa { background-color: rgba(239, 68, 68, 0.05); }
+        .row-baixa td { color: #ef4444 !important; font-weight: 600; }
+        .row-neutro td { color: #cbd5e1; }
+        
+        .iframe-container { position: relative; width: 100%; height: 100%; background: white; border-radius: 0 0 8px 8px; overflow: hidden; }
+        .iframe-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        
+        .news-feed { height: 100%; overflow-y: auto; font-family: 'Courier New', Courier, monospace; scrollbar-width: thin; scrollbar-color: #475569 #1e293b; }
+        .news-feed::-webkit-scrollbar { width: 6px; }
+        .news-feed::-webkit-scrollbar-track { background: #1e293b; }
+        .news-feed::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        .news-item { display: flex; gap: 10px; padding: 5px 8px; border-bottom: 1px solid #1e293b; font-size: 0.75rem; transition: background 0.2s; }
+        .news-item:hover { background-color: #0f172a; }
+        .news-time { color: #94a3b8; white-space: nowrap; }
+        .news-title { color: #fb923c; flex-grow: 1; line-height: 1.3; }
+        .news-source { color: #ef4444; text-decoration: none; white-space: nowrap; }
+        .news-source:hover { text-decoration: underline; }
+        
+        .highlight-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 2px solid #334155; border-radius: 6px; padding: 6px 10px; min-width: 105px; text-align: center; transition: all 0.3s; }
+        .highlight-card.up { border-color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.1); }
+        .highlight-card.down { border-color: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.1); }
+        
+        .hound-panel { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid #334155; border-radius: 8px; padding: 10px 15px; margin-bottom: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .hound-header { font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid #334155; padding-bottom: 3px; margin-bottom: 8px; font-weight: 700; }
+        .hound-grid { display: grid; grid-template-columns: 1.25fr 1fr; gap: 15px; align-items: center; }
+        @media (max-width: 900px) { .hound-grid { grid-template-columns: 1fr; } }
+        .hound-reading { font-size: 13px; color: #f8fafc; font-weight: 700; line-height: 1.25; margin-bottom: 5px; }
+        .hound-reason { font-size: 10px; color: #cbd5e1; line-height: 1.45; background: #0f172a; padding: 6px 8px; border-radius: 4px; border-left: 2px solid #38bdf8;}
+        .hound-reason span { color: #fb923c; font-weight: bold; }
+        .hound-plan { background: rgba(15, 23, 42, 0.6); border-radius: 6px; padding: 8px; border: 1px solid #334155; }
+        .hound-row { display: flex; justify-content: space-between; align-items: center; font-size: 10px; padding: 4px 0; border-bottom: 1px solid #1e293b; }
+        .hound-row:last-child { border-bottom: none; }
+        .hound-badge { padding: 1px 6px; border-radius: 10px; font-weight: 700; font-size: 9px; }
+        .badge-red { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+        .badge-green { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; }
+        .badge-orange { background: rgba(251, 146, 60, 0.2); color: #fb923c; border: 1px solid #fb923c; }
+        .badge-blue { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #38bdf8; }
+        .agressao-bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 4px; background: #334155; }
+        .agressao-compra { background: #10b981; transition: width 0.5s; }
+        .agressao-venda { background: #ef4444; transition: width 0.5s; }
+        
+        .flux-indicator { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border: 1px solid transparent; transition: all 0.3s; }
+        .flux-buy { background: rgba(16, 185, 129, 0.15); color: #10b981; border-color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
+        .flux-sell { background: rgba(239, 68, 68, 0.15); color: #ef4444; border-color: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+        .flux-neutral { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border-color: #94a3b8; }
+        .flux-dot { width: 8px; height: 8px; border-radius: 50%; background-color: currentColor; box-shadow: 0 0 8px currentColor; }
+        
+        .macro-link { color: #38bdf8; text-decoration: none; transition: color 0.3s; }
+        .macro-link:hover { color: #06b6d4; text-decoration: underline; }
+
+        .fibo-box { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+        @media (max-width: 1024px) { .fibo-box { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        .fibo-item { text-align: center; background: #0f172a; padding: 5px 4px; border-radius: 6px; border: 1px solid #334155; display: flex; flex-direction: column; justify-content: center; transition: all 0.3s; }
+        .fibo-item span { display: block; font-size: 8.5px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fibo-item strong { font-size: 12px; color: #f8fafc; font-family: 'JetBrains Mono', 'Courier New', monospace; font-weight: 700; }
+
+        .fibo-oversold { border-color: rgba(16, 185, 129, 0.55) !important; background: linear-gradient(180deg, rgba(16, 185, 129, 0.12) 0%, #0f172a 100%) !important; box-shadow: inset 0 0 8px rgba(16, 185, 129, 0.12); }
+        .fibo-oversold span { color: #34d399 !important; font-weight: 700; }
+        .fibo-overbought { border-color: rgba(239, 68, 68, 0.55) !important; background: linear-gradient(180deg, rgba(239, 68, 68, 0.12) 0%, #0f172a 100%) !important; box-shadow: inset 0 0 8px rgba(239, 68, 68, 0.12); }
+        .fibo-overbought span { color: #f87171 !important; font-weight: 700; }
+        .fibo-attention { border-color: rgba(249, 115, 22, 0.65) !important; background: linear-gradient(180deg, rgba(249, 115, 22, 0.14) 0%, #0f172a 100%) !important; box-shadow: inset 0 0 8px rgba(249, 115, 22, 0.15); }
+        .fibo-attention span { color: #fb923c !important; font-weight: 700; }
+        
+        .doador-input { width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 4px; padding: 2px 6px; color: #f8fafc; font-family: 'JetBrains Mono', monospace; font-size: 11px; outline: none; text-align: right; }
+        .doador-input:focus { border-color: #38bdf8; }
+        .doador-lbl { font-size: 9px; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 2px; }
+    </style>
+</head>
+<body class="p-2 md:p-3 min-h-screen flex flex-col justify-between">
+    <div class="max-w-[1700px] mx-auto w-full">
+        
+        <div id="watchdog-alert" class="hidden bg-red-600 text-white text-xs font-bold px-4 py-2 rounded mb-2 flex justify-between items-center shadow-lg">
+            <span>⚠️ O motor principal está offline ou demorando mais de 5 minutos. Verifique as fontes de dados.</span>
+            <button onclick="location.reload()" class="bg-white text-red-600 px-2 py-1 rounded hover:bg-gray-200 transition">Atualizar Página</button>
+        </div>
+
+        <!-- CABEÇALHO -->
+        <header class="mb-2 flex flex-col xl:flex-row justify-between items-center border-b border-slate-700 pb-2 gap-2">
+            <div class="text-center xl:text-left shrink-0">
+                <div class="flex items-center justify-center xl:justify-start gap-2">
+                    <h1 class="text-xl font-black text-white tracking-wide">Radar de Mercado <span class="text-cyan-500">Pro</span></h1>
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#10b981]"></div>
+                </div>
+                <p class="text-slate-400 text-[9px] font-semibold tracking-widest uppercase mt-0.5">Alan Silva &bull; Monitoramento Global</p>
+                <p id="header-date" class="text-cyan-400 text-[9px] font-bold tracking-widest uppercase mt-0.5"></p>
+            </div>
+            <div class="flex-1 flex justify-center overflow-x-auto py-1 w-full">
+                <div class="flex gap-2 justify-center flex-wrap xl:flex-nowrap" id="favorites-bar">
+                    <div class="text-xs text-slate-500 animate-pulse mt-2">Sincronizando ativos...</div>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-2 justify-center shrink-0">
+                <div class="clock-box clock-ac">
+                    <div class="clock-label">Rio Branco</div>
+                    <div class="clock-time" id="clock-ac">--:--</div>
+                    <div class="text-[8px] text-slate-500 font-mono mt-0.5">UTC-5</div>
+                </div>
+                <div class="clock-box clock-sp">
+                    <div class="clock-label">S&atilde;o Paulo</div>
+                    <div class="clock-time" id="clock-brt">--:--</div>
+                    <div class="mt-0.5 flex justify-center"><span id="status-b3" class="text-[8px] bg-slate-600 px-1.5 py-0.5 rounded text-white font-bold">...</span></div>
+                </div>
+                <div class="clock-box clock-ny">
+                    <div class="clock-label">Nova York</div>
+                    <div class="clock-time" id="clock-ny">--:--</div>
+                    <div class="mt-0.5 flex justify-center"><span id="status-ny" class="text-[8px] bg-slate-600 px-1.5 py-0.5 rounded text-white font-bold">...</span></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- PASSO 1: LEITURA QUÂNTICA / IA PARA MINI ÍNDICE (WIN / IBOV) -->
+        <div class="hound-panel">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-1 mb-2">
+                <div class="hound-header !border-none !pb-0 !mb-0">Passo 1 &bull; IA Quântica &bull; Probabilidade Mini Índice (WIN / IBOV)</div>
+                <div id="flux-indicator" class="flux-indicator flux-neutral">
+                    <div class="flux-dot"></div>
+                    <span id="flux-text">NEUTRO (CAUTELA)</span>
+                </div>
+            </div>
+            <div class="hound-grid">
+                <div>
+                    <div class="hound-reading" id="hound-reading">Calculando probabilidade e correlação macro para o WIN/IBOV...</div>
+                    <div class="hound-reason" id="hound-reason">Correlacionando S&amp;P Fut, VIX, DI1, USD/BRL, DXY, commodities, pesos IBOV e BCB...</div>
+                    <div id="hound-impacto-win" class="mt-1.5 text-[10px] font-mono font-bold text-cyan-400">Impacto no WIN/IBOV: Aguardando cálculo...</div>
+                </div>
+                <div>
+                    <div class="hound-plan">
+                        <div class="hound-row"><span class="text-slate-400">Probabilidade WIN:</span><span id="hound-dir" class="hound-badge badge-blue">NEUTRO (CAUTELA)</span></div>
+                        <div class="hound-row"><span class="text-slate-400">Impacto / Convicção:</span><span id="hound-int" class="hound-badge badge-blue">MODERADA</span></div>
+                        <div class="hound-row"><span class="text-slate-400">Score Quântico / Gap:</span><span id="hound-score-duplo" class="text-white font-mono text-[10px]">-- / --</span></div>
+                        <div class="agressao-bar"><div id="agressao-compra" class="agressao-compra" style="width: 50%;"></div><div id="agressao-venda" class="agressao-venda" style="width: 50%;"></div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="fibo-box">
+                <div class="fibo-item"><span>Fech. Anterior</span><strong id="val-justo">--</strong></div>
+                <div class="fibo-item"><span>M&aacute;x. Anterior</span><strong id="val-resist" class="text-red-400">--</strong></div>
+                <div class="fibo-item"><span>M&iacute;n. Anterior</span><strong id="val-suport" class="text-green-400">--</strong></div>
+                <div class="fibo-item fibo-oversold" title="Exaustão de Venda (-11.8%)"><span>Fibo -11.8%</span><strong id="val-fibo-neg11" class="text-emerald-400">--</strong></div>
+                <div class="fibo-item fibo-attention" title="Ponto de Inflexão Central (50.0%)"><span>Fibo 50.0%</span><strong id="val-fibo-50" class="text-orange-400">--</strong></div>
+                <div class="fibo-item"><span>Fibo 61.8%</span><strong id="val-fibo">--</strong></div>
+                <div class="fibo-item fibo-overbought" title="Exaustão de Compra (+111.8%)"><span>Fibo +111.8%</span><strong id="val-fibo-111" class="text-red-400">--</strong></div>
+            </div>
+        </div>
+
+        <!-- GRID PRINCIPAL -->
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-2 mb-2">
+            <div class="xl:col-span-8 flex flex-col gap-2">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div class="flex flex-col gap-2">
+                        <div class="bg-[#1e293b] border border-slate-700 rounded-lg overflow-hidden">
+                            <h2 class="text-yellow-500 font-bold px-3 py-1 text-[10px] border-b border-slate-700 uppercase bg-[#0f172a]">Am&eacute;ricas</h2>
+                            <table class="tabela-mercado"><thead><tr><th>Ativo</th><th>&Uacute;ltimo</th><th>Var.%</th></tr></thead><tbody id="tb-americas"></tbody></table>
+                        </div>
+                        <div class="bg-[#1e293b] border border-slate-700 rounded-lg overflow-hidden">
+                            <h2 class="text-yellow-500 font-bold px-3 py-1 text-[10px] border-b border-slate-700 uppercase bg-[#0f172a]">Juros &amp; Europa</h2>
+                            <table class="tabela-mercado"><thead><tr><th>Ativo</th><th>&Uacute;ltimo</th><th>Var.%</th></tr></thead><tbody id="tb-europa"></tbody></table>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <div class="bg-[#1e293b] border border-slate-700 rounded-lg overflow-hidden">
+                            <h2 class="text-yellow-500 font-bold px-3 py-1 text-[10px] border-b border-slate-700 uppercase bg-[#0f172a]">Futuros</h2>
+                            <table class="tabela-mercado"><thead><tr><th>Ativo</th><th>&Uacute;ltimo</th><th>Var.%</th></tr></thead><tbody id="tb-futuros"></tbody></table>
+                        </div>
+                        <div class="bg-[#1e293b] border border-slate-700 rounded-lg overflow-hidden">
+                            <h2 class="text-yellow-500 font-bold px-3 py-1 text-[10px] border-b border-slate-700 uppercase bg-[#0f172a]">Commodities</h2>
+                            <table class="tabela-mercado"><thead><tr><th>Ativo</th><th>&Uacute;ltimo</th><th>Var.%</th></tr></thead><tbody id="tb-commodities"></tbody></table>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <div class="bg-[#1e293b] border border-slate-700 rounded-lg overflow-hidden">
+                            <h2 class="text-yellow-500 font-bold px-3 py-1 text-[10px] border-b border-slate-700 uppercase bg-[#0f172a]">D&oacute;lar x Mundo</h2>
+                            <table class="tabela-mercado"><thead><tr><th>Ativo</th><th>&Uacute;ltimo</th><th>Var.%</th></tr></thead><tbody id="tb-moedas"></tbody></table>
+                        </div>
+                        <div class="bg-[#1e293b] border border-slate-700 rounded-lg overflow-hidden">
+                            <h2 class="text-yellow-500 font-bold px-3 py-1 text-[10px] border-b border-slate-700 uppercase bg-[#0f172a]">&Iacute;ndices &amp; Pesos B3</h2>
+                            <table class="tabela-mercado"><thead><tr><th>Ativo</th><th>&Uacute;ltimo</th><th>Var.%</th></tr></thead><tbody id="tb-b3"></tbody></table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-[#1e293b] border border-slate-700 rounded-lg flex flex-col h-[420px]">
+                    <div class="flex justify-between items-center px-3 py-1 border-b border-slate-700 bg-[#0f172a]">
+                        <h2 class="text-yellow-500 font-bold text-[10px] uppercase tracking-wider">An&aacute;lise T&eacute;cnica</h2>
+                        <select id="tv-symbol-select" class="bg-slate-800 text-slate-300 text-[9px] p-0.5 rounded border border-slate-600 outline-none font-bold">
+                            <option value="BMFBOVESPA:IBOV">IBOVESPA</option>
+                            <option value="BMFBOVESPA:WIN1!" selected>Mini &Iacute;ndice (WIN)</option>
+                            <option value="BMFBOVESPA:DOL1!">D&oacute;lar Futuro (WDO)</option>
+                            <option value="BMFBOVESPA:PETR4">PETR4</option>
+                            <option value="FX_IDC:USDBRL">USD/BRL</option>
+                        </select>
+                    </div>
+                    <div class="flex-grow w-full rounded-b-lg overflow-hidden" id="tradingview_widget"></div>
+                </div>
+            </div>
+
+            <div class="xl:col-span-4 flex flex-col gap-2">
+                <div class="bg-[#1e293b] border border-slate-700 rounded-lg flex flex-col flex-1 overflow-hidden">
+                    <h2 class="text-yellow-500 font-bold px-3 py-1 text-[10px] border-b border-slate-700 uppercase bg-[#0f172a]">Calend&aacute;rio Econ&ocirc;mico</h2>
+                    <div class="iframe-container flex-grow" style="min-height: 250px;">
+                        <iframe src="https://sslecal2.investing.com?columns=exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&importance=2,3&features=datepicker,timezone&countries=32,5,17,37,4&calType=day&timeZone=12&lang=12" allowtransparency="true"></iframe>
+                    </div>
+                </div>
+                <div class="bg-[#1e293b] border border-slate-700 rounded-lg flex flex-col h-[250px]">
+                    <div class="flex justify-between items-center px-3 py-1 border-b border-slate-700 bg-[#0f172a]">
+                        <h2 class="text-yellow-500 font-bold text-[10px] uppercase tracking-wider flex items-center gap-2">
+                            <div class="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div> Radar de Not&iacute;cias
+                        </h2>
+                        <span class="text-[8px] text-slate-500">Live</span>
+                    </div>
+                    <div class="news-feed p-1" id="news-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ÁREA DE MACRO E LINKS -->
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-2 mt-2">
+            <div class="xl:col-span-4 bg-[#1e293b] border border-slate-700 rounded-lg overflow-hidden">
+                <div class="flex justify-between items-center px-3 py-1 border-b border-slate-700 bg-[#0f172a]">
+                    <h2 class="text-yellow-500 font-bold text-[10px] uppercase">Indicadores Macro (BCB)</h2>
+                    <span id="bcb-status" class="text-[8px] text-slate-400">Carregando...</span>
+                </div>
+                <div class="p-2 space-y-2 text-xs">
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-1">
+                        <span class="text-slate-400">Selic (Meta) <small id="m-selic-d" class="text-[9px] text-slate-500">a.a.</small></span>
+                        <span class="text-white font-mono" id="macro-selic">--</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-1">
+                        <span class="text-slate-400">CDI <small id="m-cdi-d" class="text-[9px] text-slate-500">a.a.</small></span>
+                        <span class="text-white font-mono" id="macro-cdi">--</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">IPCA <small id="m-ipca-d" class="text-[9px] text-slate-500">mensal</small></span>
+                        <span class="text-white font-mono" id="macro-ipca">--</span>
+                    </div>
+                </div>
+            </div>
+            <div class="xl:col-span-8 bg-[#1e293b] border border-slate-700 rounded-lg overflow-hidden">
+                <h2 class="text-yellow-500 font-bold px-3 py-1 text-[10px] border-b border-slate-700 uppercase bg-[#0f172a]">Links Úteis & Correlações</h2>
+                <div class="p-2 grid grid-cols-2 gap-2 text-xs">
+                    <a href="https://www.bcb.gov.br/estabilidadefinanceira/focus" target="_blank" class="macro-link">Relatório Focus (BCB)</a>
+                    <a href="https://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/market-data/consultas/mercado-de-derivativos/precos-referenciais/taxas-referenciais-bm-f-bovespa/" target="_blank" class="macro-link">Curva de Juros (DI) - B3</a>
+                    <a href="https://br.investing.com/rates-bonds/brazil-government-bonds" target="_blank" class="macro-link">Títulos Públicos (Investing)</a>
+                    <a href="https://www.bcb.gov.br/estabilidadefinanceira/historicocotacoes" target="_blank" class="macro-link">Histórico Dólar PTAX (BCB)</a>
+                </div>
+                <div class="p-2 text-[10px] text-slate-500 border-t border-slate-700 mt-2">
+                    <strong>Correlação WIN / IBOV:</strong> S&amp;P500_F, commodities e pesos da B3 (Financeiro, Materiais Básicos, Petróleo) a favor costumam apoiar mercado comprado; DI futuro, USD/BRL, DXY e VIX em alta costumam pressionar para venda ou cautela.
+                </div>
+            </div>
+        </div>
+
+        <!-- ZONA N1 A N5 -->
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-2 mt-2">
+            <div class="xl:col-span-8 bg-[#1e293b] border border-slate-700 rounded-lg overflow-hidden flex flex-col">
+                <div class="flex justify-between items-center px-3 py-1 border-b border-slate-700 bg-[#0f172a]">
+                    <h2 class="text-yellow-500 font-bold text-[10px] uppercase tracking-wider">N1 &bull; Radar Shark (Mercado Global)</h2>
+                    <span id="n1-status" class="text-[8px] text-slate-400">Aguardando...</span>
+                </div>
+                <div class="p-2 grid grid-cols-2 md:grid-cols-4 gap-2 flex-grow" id="n1-cards">
+                    <div class="text-xs text-slate-500 col-span-4 text-center mt-4">Carregando dados...</div>
+                </div>
+            </div>
+
+            <div class="xl:col-span-4 bg-[#1e293b] border border-slate-700 rounded-lg overflow-hidden flex flex-col">
+                <div class="flex justify-between items-center px-3 py-1 border-b border-slate-700 bg-[#0f172a]">
+                    <h2 class="text-yellow-500 font-bold text-[10px] uppercase tracking-wider">N4 &bull; Câmbio ao Vivo</h2>
+                    <span id="n4-status" class="text-[8px] text-slate-400">Conectando...</span>
+                </div>
+                <div class="p-2 grid grid-cols-2 gap-2 flex-grow" id="n4-cards">
+                    <div class="text-xs text-slate-500 col-span-2 text-center mt-4">Carregando câmbio...</div>
+                </div>
+            </div>
+
+            <div class="xl:col-span-8 bg-[#1e293b] border border-slate-700 rounded-lg overflow-hidden flex flex-col">
+                <div class="flex justify-between items-center px-3 py-1 border-b border-slate-700 bg-[#0f172a]">
+                    <h2 class="text-yellow-500 font-bold text-[10px] uppercase tracking-wider">N2 &bull; Histórico IBOV (Últimos 10 Pregões)</h2>
+                    <span id="hist-quote" class="text-[8px] text-slate-400 font-mono"></span>
+                </div>
+                <div class="p-2 flex-grow overflow-x-auto">
+                    <table class="tabela-mercado">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Abertura</th>
+                                <th>Máxima</th>
+                                <th>Mínima</th>
+                                <th>Fechamento</th>
+                                <th>Amplitude</th>
+                                <th>Volume</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tb-historico-ibov">
+                            <tr><td colspan="7" class="text-center text-slate-500 italic py-3">Carregando histórico...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="xl:col-span-4 bg-[#1e293b] border border-slate-700 rounded-lg overflow-hidden flex flex-col">
+                <div class="flex justify-between items-center px-3 py-1 border-b border-slate-700 bg-[#0f172a]">
+                    <h2 class="text-yellow-500 font-bold text-[10px] uppercase tracking-wider">N3 &bull; Motor Shark Flow WIN</h2>
+                    <button id="fib-mode-btn" type="button" class="bg-slate-800 hover:bg-slate-700 text-cyan-400 text-[8px] px-1.5 py-0.5 rounded border border-slate-600 font-bold">Fibo: D-1 Real</button>
+                </div>
+                <div class="p-3 flex-grow space-y-2">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><span class="doador-lbl">Fech. D-1</span><input type="number" id="in-close" class="doador-input" value="169817" step="5"></div>
+                        <div><span class="doador-lbl">Máx. D-1</span><input type="number" id="in-high" class="doador-input" value="171750" step="5"></div>
+                        <div><span class="doador-lbl">Mín. D-1</span><input type="number" id="in-low" class="doador-input" value="169300" step="5"></div>
+                        <div><span class="doador-lbl">Amplitude</span><input type="number" id="in-amp" class="doador-input" value="2450" step="10"></div>
+                        <div><span class="doador-lbl">S&amp;P 500 Fut (%)</span><input type="number" id="in-sp" class="doador-input" value="0.55" step="0.01"></div>
+                        <div><span class="doador-lbl">VIX</span><input type="number" id="in-vix" class="doador-input" value="21.33" step="0.01"></div>
+                        <div><span class="doador-lbl">Juros DI (%)</span><input type="number" id="in-di" class="doador-input" value="1.18" step="0.01"></div>
+                        <div><span class="doador-lbl">Agressão (+C/-V)</span><input type="number" id="in-agr" class="doador-input" value="-15" min="-100" max="100" step="1"></div>
+                    </div>
+                    <div class="border-t border-slate-700 pt-2 mt-2">
+                        <div class="flex justify-between text-[11px] mb-1">
+                            <span class="text-slate-400">Preço Teórico:</span>
+                            <span id="out-preco-teorico" class="font-mono font-bold text-white">--</span>
+                        </div>
+                        <div class="flex justify-between text-[11px] mb-1">
+                            <span class="text-slate-400">Mín / Máx Proj.:</span>
+                            <span id="out-minmax-proj" class="font-mono font-bold text-cyan-400">--</span>
+                        </div>
+                        <div class="flex justify-between text-[11px] mb-1">
+                            <span class="text-slate-400">Score Quântico:</span>
+                            <span id="out-score-local" class="font-mono font-bold text-white">--</span>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-center">
+                        <button id="btn-calcular" type="button" class="bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold py-1 px-4 rounded transition">Recalcular</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="xl:col-span-12 bg-[#1e293b] border border-slate-700 rounded-lg overflow-hidden flex flex-col">
+                <div class="flex justify-between items-center px-3 py-1 border-b border-slate-700 bg-[#0f172a]">
+                    <h2 class="text-yellow-500 font-bold text-[10px] uppercase tracking-wider" id="fib-title-n5">N5 &bull; Fibo Interativo (Cálculo Exato sobre D-1)</h2>
+                    <span id="fib-range-lbl" class="text-[8px] text-slate-400 font-mono">Tick WIN 5 pts</span>
+                </div>
+                <div class="p-4 flex-grow flex flex-col items-center justify-center">
+                    <div class="w-full max-w-5xl relative h-24">
+                        <div id="fibo-ruler" class="w-full h-full relative"></div>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 w-full mt-4" id="fibo-grid-n5"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================================================================== -->
+        <!-- FINAL DO CÓDIGO: MAPA IBOVESPA + IBOVESPA PONTOS (DUAS ÚLTIMAS IMAGENS) -->
+        <!-- ===================================================================== -->
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-2 mt-2 mb-4">
+            <div class="xl:col-span-6 bg-[#1e293b] border border-slate-700 rounded-lg overflow-hidden flex flex-col">
+                <div class="flex justify-between items-center px-3 py-1 border-b border-slate-700 bg-[#0f172a]">
+                    <h2 class="text-yellow-500 font-bold text-[10px] uppercase tracking-wider">Mapa Ibovespa &bull; Setores &amp; Ativos</h2>
+                    <span class="text-[8px] text-slate-400 font-mono">Peso (%) &bull; Var. (%)</span>
+                </div>
+                <div class="p-2 flex-grow min-h-[380px]" id="mapa-ibov-treemap"></div>
+            </div>
+
+            <div class="xl:col-span-6 bg-[#1e293b] border border-slate-700 rounded-lg overflow-hidden flex flex-col">
+                <div class="flex justify-between items-center px-3 py-1 border-b border-slate-700 bg-[#0f172a]">
+                    <h2 class="text-yellow-500 font-bold text-[10px] uppercase tracking-wider">Ibovespa Pontos &bull; Estrutura &amp; Contribuição</h2>
+                    <span id="ibov-pontos-total" class="text-[9px] font-mono font-bold text-cyan-400">-- pts</span>
+                </div>
+                <div class="p-2 flex-grow min-h-[380px] flex items-center justify-center" id="ibov-pontos-radial"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DADOS EXTRAÍDOS PARA MAPA IBOVESPA E IBOVESPA PONTOS -->
+    <script id="ticker_heatmap" type="application/json">{"VALE3": {"sector": "Materiais Básicos", "last_price": 59.0, "netchange": -2.22, "part": 14.89, "name": "VALE"}, "PETR4": {"sector": "Petróleo, Gás e Biocombustíveis", "last_price": 43.17, "netchange": -1.84, "part": 7.146, "name": "PETROBRAS"}, "ITUB4": {"sector": "Financeiro", "last_price": 40.19, "netchange": -1.71, "part": 6.376, "name": "ITAUUNIBANCO"}, "PETR3": {"sector": "Petróleo, Gás e Biocombustíveis", "last_price": 49.3, "netchange": -1.85, "part": 4.41, "name": "PETROBRAS"}, "BBDC4": {"sector": "Financeiro", "last_price": 14.08, "netchange": -2.29, "part": 3.716, "name": "BRADESCO"}, "B3SA3": {"sector": "Financeiro", "last_price": 14.3, "netchange": -2.39, "part": 3.604, "name": "B3"}, "ELET3": {"sector": "Utilidade Pública", "last_price": 58.68, "netchange": 0.82, "part": 3.382, "name": "ELETROBRAS"}, "BBAS3": {"sector": "Financeiro", "last_price": 14.12, "netchange": -3.42, "part": 3.255, "name": "BRASIL"}, "ABEV3": {"sector": "Consumo não Cíclico", "last_price": 16.07, "netchange": 0.88, "part": 2.951, "name": "AMBEV S/A"}, "RENT3": {"sector": "Consumo Cíclico", "last_price": 29.45, "netchange": -0.71, "part": 2.599, "name": "LOCALIZA"}, "WEGE3": {"sector": "Bens Industriais", "last_price": 51.38, "netchange": 0.45, "part": 2.594, "name": "WEG"}, "ITSA4": {"sector": "Financeiro", "last_price": 13.15, "netchange": -1.13, "part": 2.327, "name": "ITAUSA"}, "PRIO3": {"sector": "Petróleo, Gás e Biocombustíveis", "last_price": 61.87, "netchange": -3.27, "part": 1.803, "name": "PETRORIO"}, "BPAC11": {"sector": "Financeiro", "last_price": 50.11, "netchange": -3.54, "part": 1.772, "name": "BTGP BANCO"}, "EQTL3": {"sector": "Utilidade Pública", "last_price": 33.67, "netchange": -1.26, "part": 1.701, "name": "EQUATORIAL"}, "RADL3": {"sector": "Saúde", "last_price": 14.03, "netchange": -0.85, "part": 1.693, "name": "RAIADROGASIL"}, "SUZB3": {"sector": "Materiais Básicos", "last_price": 55.6, "netchange": 0.38, "part": 1.688, "name": "SUZANO S.A."}, "RDOR3": {"sector": "Saúde", "last_price": 36.31, "netchange": 0.19, "part": 1.648, "name": "REDE D OR"}, "GGBR4": {"sector": "Materiais Básicos", "last_price": 25.59, "netchange": 3.65, "part": 1.419, "name": "GERDAU"}, "RAIL3": {"sector": "Bens Industriais", "last_price": 16.74, "netchange": -1.01, "part": 1.334, "name": "RUMO S.A."}, "JBSS3": {"sector": "Consumo não Cíclico", "last_price": 38.9, "netchange": 1.59, "part": 1.023, "name": "JBS"}, "BBSE3": {"sector": "Financeiro", "last_price": 36.66, "netchange": -1.66, "part": 1.022, "name": "BBSEGURIDADE"}, "HAPV3": {"sector": "Saúde", "last_price": 6.36, "netchange": 3.92, "part": 0.933, "name": "HAPVIDA"}, "VIVT3": {"sector": "Comunicações", "last_price": 35.56, "netchange": -0.92, "part": 0.853, "name": "TELEF BRASIL"}, "EMBR3": {"sector": "Bens Industriais", "last_price": 86.93, "netchange": -1.09, "part": 0.711, "name": "EMBRAER"}, "TOTS3": {"sector": "Tecnologia da Informação", "last_price": 31.93, "netchange": 0.73, "part": 0.696, "name": "TOTVS"}, "MGLU3": {"sector": "Consumo Cíclico", "last_price": 8.32, "netchange": 4.65, "part": 0.386, "name": "MAGAZ LUIZA"}}</script>
+    <script id="sector_part" type="application/json">{"Materiais Básicos": {"part": 20.657}, "Petróleo, Gás e Biocombustíveis": {"part": 17.047}, "Financeiro": {"part": 25.003}, "Utilidade Pública": {"part": 10.923}, "Consumo não Cíclico": {"part": 7.36}, "Consumo Cíclico": {"part": 5.875}, "Bens Industriais": {"part": 5.551}, "Saúde": {"part": 5.312}, "Comunicações": {"part": 1.422}, "Tecnologia da Informação": {"part": 0.873}}</script>
+    
+
+
+        <!-- CAMADA ADICIONAL: SAÚDE DO FEED + CONTEXTO MACRO (ADICIONADA SEM ALTERAR OS BLOCOS ORIGINAIS) -->
+        <section id="camada-feed-macro" class="mt-3 grid grid-cols-1 xl:grid-cols-12 gap-2">
+            <div class="xl:col-span-4 bg-[#1e293b] border border-slate-700 rounded-lg p-3">
+                <div class="flex items-center justify-between gap-2">
+                    <h2 class="text-cyan-400 font-bold text-[10px] uppercase tracking-wider">Saúde do Feed • WIN Flow</h2>
+                    <span id="realtime-status" class="text-[9px] text-yellow-300 font-mono">Aguardando primeira resposta</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                    <div class="bg-slate-900 rounded p-2"><div class="text-[9px] text-slate-500 uppercase">Última resposta</div><div id="feed-last-update" class="text-xs text-white font-mono">--</div></div>
+                    <div class="bg-slate-900 rounded p-2"><div class="text-[9px] text-slate-500 uppercase">Latência API</div><div id="feed-latency" class="text-xs text-white font-mono">--</div></div>
+                    <div class="bg-slate-900 rounded p-2"><div class="text-[9px] text-slate-500 uppercase">Origem</div><div id="feed-source" class="text-xs text-white">Render • /api/shark</div></div>
+                    <div class="bg-slate-900 rounded p-2"><div class="text-[9px] text-slate-500 uppercase">Frequência de consulta</div><div class="text-xs text-white font-mono">15 segundos</div></div>
+                </div>
+                <p id="feed-detail" class="text-[9px] text-slate-500 mt-2">Verificando disponibilidade do endpoint de mercado.</p>
+                <p class="text-[9px] text-amber-300 mt-1">Atenção: disponibilidade da API não comprova fluxo real de agressão, book ou negócios do WIN. Isso depende de uma fonte de dados específica da B3.</p>
+            </div>
+            <div class="xl:col-span-8 bg-[#1e293b] border border-cyan-900 rounded-lg overflow-hidden">
+                <div class="px-3 py-2 bg-[#0f172a] border-b border-slate-700 flex justify-between items-center gap-2">
+                    <div><h2 class="text-cyan-400 font-bold text-[10px] uppercase tracking-wider">Contexto Macro • Banco Central / SGS</h2>
+                    <p class="text-[9px] text-slate-500">Indicadores oficiais com data de observação e periodicidade própria</p></div>
+                    <span id="macro-status" class="text-[9px] text-slate-400 font-mono">Aguardando /api/macro</span>
+                </div>
+                <div class="p-3 grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div class="bg-slate-900 rounded p-2"><div class="text-[9px] text-slate-400">Meta Selic</div><div id="macro2-selic" class="text-lg text-white font-bold font-mono">--</div><div id="macro2-selic-date" class="text-[9px] text-slate-500">Obs.: --</div></div>
+                    <div class="bg-slate-900 rounded p-2"><div class="text-[9px] text-slate-400">IPCA mensal</div><div id="macro2-ipca" class="text-lg text-white font-bold font-mono">--</div><div id="macro2-ipca-date" class="text-[9px] text-slate-500">Obs.: --</div></div>
+                    <div class="bg-slate-900 rounded p-2"><div class="text-[9px] text-slate-400">Dólar PTAX venda</div><div id="macro2-usd" class="text-lg text-white font-bold font-mono">--</div><div id="macro2-usd-date" class="text-[9px] text-slate-500">Obs.: --</div></div>
+                    <div class="bg-slate-900 rounded p-2"><div class="text-[9px] text-slate-400">IBC-Br</div><div id="macro2-ibc" class="text-lg text-white font-bold font-mono">--</div><div id="macro2-ibc-date" class="text-[9px] text-slate-500">Obs.: --</div></div>
+                </div>
+                <div class="px-3 pb-3"><p id="macro-context" class="text-[10px] text-slate-300">O painel macro aguarda a API. Séries macroeconômicas não representam fluxo intradiário.</p></div>
+            </div>
+        </section>
+
+    <footer class="mt-2 pt-1 border-t border-slate-800 text-center text-[8px] text-slate-500 tracking-[0.2em] uppercase w-full max-w-[1700px] mx-auto">
+        &copy; 2026 ACPTELECOM &bull; ALAN CONSULTORIA E PROJETOS DE TELECOMUNICA&Ccedil;&Otilde;ES &bull; RIO BRANCO - AC
+    </footer>
+
+    <script>
+        const API_URL = 'https://acp-radar-api.onrender.com/api/shark';
+        const RSS_SOURCES = [
+            { name: 'InfoMoney', url: 'https://www.infomoney.com.br/feed/' },
+            { name: 'Money Times', url: 'https://www.moneytimes.com.br/feed/' }
+        ];
+        const BCB_SERIES = [
+            { id: 432,  el: 'macro-selic', dateEl: 'm-selic-d', unit: 'a.a.', val: 14.25 },
+            { id: 4389, el: 'macro-cdi',   dateEl: 'm-cdi-d',   unit: 'a.a.', val: 14.15 },
+            { id: 433,  el: 'macro-ipca',  dateEl: 'm-ipca-d',  unit: 'mensal', val: 0.45 }
+        ];
+
+        const REF_FALLBACK = {
+            close: 169816.64,
+            high: 171750.00,
+            low: 169300.00,
+            amp: 2450.00,
+            ibov_last: 167537.95,
+            ibov_prev: 169816.64,
+            sp_fut_pct: 0.55,
+            vix: 21.33,
+            vxbr: 20.93,
+            di_pct: 1.18,
+            agr_score: -15,
+            dxy: { price: 103.785, change: 0.05 },
+            wti: { price: 82.95, change: 0.78 },
+            brent: { price: 92.92, change: 1.62 },
+            bcom: { price: 128.76, change: 0.00 },
+            nasdaq: { price: 24429.89, change: 0.42 },
+            indfut: { price: 168905.00, change: -1.53 },
+            dolfut: { price: 5896.50, change: 1.82 },
+            di1f27: { price: 13.691, change: 0.02 },
+            di1f28: { price: 14.535, change: 0.94 },
+            di1f29: { price: 14.970, change: 1.18 },
+            historico: [
+                { data: '18/11/2026', abertura: 169785.30, maxima: 170259.69, minima: 167998.39, fechamento: 167537.95, volume: '-' },
+                { data: '17/11/2026', abertura: 169300.00, maxima: 171750.00, minima: 169300.00, fechamento: 169816.64, volume: '9.987.000' },
+                { data: '16/11/2026', abertura: 172458.00, maxima: 172458.00, minima: 168491.00, fechamento: 169295.41, volume: '10.140.100' },
+                { data: '13/11/2026', abertura: 171324.00, maxima: 172716.00, minima: 171132.00, fechamento: 172458.00, volume: '10.691.600' },
+                { data: '12/11/2026', abertura: 172060.00, maxima: 172060.00, minima: 169942.00, fechamento: 171324.00, volume: '13.246.300' },
+                { data: '11/11/2026', abertura: 171337.00, maxima: 172987.00, minima: 171335.00, fechamento: 172060.00, volume: '10.542.600' },
+                { data: '10/11/2026', abertura: 172238.00, maxima: 173272.00, minima: 170569.00, fechamento: 171337.00, volume: '10.543.700' },
+                { data: '09/11/2026', abertura: 168499.00, maxima: 172236.00, minima: 168499.00, fechamento: 172236.00, volume: '10.102.700' },
+                { data: '06/11/2026', abertura: 166192.00, maxima: 169073.00, minima: 165910.00, fechamento: 168499.00, volume: '12.027.200' },
+                { data: '05/11/2026', abertura: 167565.00, maxima: 168994.00, minima: 166190.00, fechamento: 166192.00, volume: '12.398.400' }
+            ]
+        };
+
+        let lastApiUpdate = Date.now();
+        let fibUseD1 = true;
+
+        const tick5 = v => Math.round(v / 5) * 5;
+        const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+        const fmt = (v, d = 2) => Number.isFinite(v) ? v.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d }) : '--';
+
+        async function getJSON(url, ms = 12000) {
+            const ctl = new AbortController();
+            const t = setTimeout(() => ctl.abort(), ms);
+            try {
+                const r = await fetch(url, { signal: ctl.signal, cache: 'no-store' });
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return await r.json();
+            } finally {
+                clearTimeout(t);
+            }
+        }
+
+        function atualizarRelogios() {
+            const agoraAC = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Rio_Branco" }));
+            const agoraBRT = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+            const agoraNY = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+            
+            document.getElementById('clock-ac').innerText = agoraAC.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('clock-brt').innerText = agoraBRT.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('clock-ny').innerText = agoraNY.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            
+            const opcoesData = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('header-date').innerText = agoraBRT.toLocaleDateString('pt-BR', opcoesData);
+
+            const b3Aberta = (agoraBRT.getDay() > 0 && agoraBRT.getDay() < 6) && (agoraBRT.getHours() >= 10 && agoraBRT.getHours() < 18);
+            const statusB3 = document.getElementById('status-b3');
+            statusB3.innerText = b3Aberta ? "ABERTA" : "FECHADA";
+            statusB3.className = `text-[8px] ${b3Aberta ? 'bg-green-600' : 'bg-red-600'} px-1.5 py-0.5 rounded text-white font-bold`;
+            
+            const nyAberta = (agoraNY.getDay() > 0 && agoraNY.getDay() < 6) && (agoraNY.getHours() >= 9 && agoraNY.getHours() < 16);
+            const statusNY = document.getElementById('status-ny');
+            statusNY.innerText = nyAberta ? "ABERTA" : "FECHADA";
+            statusNY.className = `text-[8px] ${nyAberta ? 'bg-green-600' : 'bg-red-600'} px-1.5 py-0.5 rounded text-white font-bold`;
+        }
+        setInterval(atualizarRelogios, 1000);
+        atualizarRelogios();
+
+        function calcularInteligenciaQuanticaWIN(ctx) {
+            const { sp, vix, di, agr, usdPct, dxyPct, wtiPct, ibovBase } = ctx;
+
+            const vExt = clamp(sp * 55, -100, 100);
+            const vVol = clamp((20 - vix) * 6, -100, 100);
+            const vJuros = clamp(-di * 55, -100, 100);
+            const vCambio = clamp((-(usdPct || 0) * 35) + (-(dxyPct || 0) * 45), -100, 100);
+
+            const heatmapEl = document.getElementById('ticker_heatmap');
+            const tickers = heatmapEl ? JSON.parse(heatmapEl.textContent || '{}') : {};
+            const listaConst = Object.values(tickers);
+            const somaPart = listaConst.reduce((acc, c) => acc + (parseFloat(c.part) || 0), 0) || 1;
+            const varPesos = listaConst.reduce((acc, c) => acc + ((parseFloat(c.netchange) || 0) * (parseFloat(c.part) || 0)), 0) / somaPart;
+            const vPesos = clamp((varPesos * 28) + ((wtiPct || 0) * 15), -100, 100);
+            const vFluxo = clamp(agr, -100, 100);
+
+            const sinais = [vExt, vVol, vJuros, vCambio, vPesos, vFluxo].map(x => Math.sign(x));
+            const somaSinais = sinais.reduce((a, b) => a + b, 0);
+            const coerencia = Math.abs(somaSinais) / 6;
+
+            const scoreBruto = (0.24 * vExt) + (0.14 * vVol) + (0.18 * vJuros) + (0.14 * vCambio) + (0.18 * vPesos) + (0.12 * vFluxo);
+            const scoreQuantico = clamp(scoreBruto * (0.75 + 0.25 * coerencia), -100, 100);
+
+            const tensaoVol = vix >= 22;
+            const conflitoForte = (vExt > 25 && (vJuros < -25 || vPesos < -25)) || (vExt < -25 && (vJuros > 25 && vPesos > 25)) || (coerencia < 0.34 && Math.abs(scoreQuantico) < 28);
+
+            let probabilidade = 'NEUTRO (CAUTELA)';
+            let impactoWIN = 'IMPACTO MISTO / DIVERGENTE → CAUTELA OPERACIONAL';
+            let badgeClass = 'badge-orange';
+            let fluxClass = 'flux-neutral';
+            let fluxText = '⚠ NEUTRO (CAUTELA)';
+            let conviccao = `COERÊNCIA ${(coerencia * 100).toFixed(0)}%`;
+
+            if (tensaoVol || conflitoForte) {
+                probabilidade = 'NEUTRO (CAUTELA)';
+                badgeClass = 'badge-orange';
+                fluxClass = 'flux-neutral';
+                fluxText = '⚠ NEUTRO (CAUTELA)';
+                impactoWIN = `Esses dados impactam o WIN/IBOV com ruído/divergência (VIX ${fmt(vix, 2)}, DI ${fmt(di, 2)}%, Pesos ${fmt(varPesos, 2)}%) → EVITAR AFOITO / AGUARDAR CONFIRMAÇÃO`;
+            } else if (scoreQuantico >= 18) {
+                probabilidade = 'ALTA (COMPRA)';
+                badgeClass = 'badge-green';
+                fluxClass = 'flux-buy';
+                fluxText = '▲ ALTA (COMPRA)';
+                conviccao = scoreQuantico >= 45 ? 'ALTA (COMPRA)' : 'MODERADA (COMPRA)';
+                impactoWIN = `Esses dados impactam o WIN/IBOV A FAVOR → MERCADO COMPRADO (Score ${scoreQuantico >= 0 ? '+' : ''}${fmt(scoreQuantico, 1)})`;
+            } else if (scoreQuantico <= -18) {
+                probabilidade = 'BAIXA (VENDA)';
+                badgeClass = 'badge-red';
+                fluxClass = 'flux-sell';
+                fluxText = '▼ BAIXA (VENDA)';
+                conviccao = scoreQuantico <= -45 ? 'ALTA (VENDA)' : 'MODERADA (VENDA)';
+                impactoWIN = `Esses dados impactam o WIN/IBOV CONTRA → MERCADO VENDIDO (Score ${fmt(scoreQuantico, 1)})`;
+            } else {
+                probabilidade = 'NEUTRO (CAUTELA)';
+                badgeClass = 'badge-blue';
+                fluxClass = 'flux-neutral';
+                fluxText = '■ NEUTRO (CAUTELA)';
+                impactoWIN = `Esses dados impactam o WIN/IBOV EM EQUILÍBRIO/CAUTELA (Score ${scoreQuantico >= 0 ? '+' : ''}${fmt(scoreQuantico, 1)}) → MERCADO NEUTRO / RANGE`;
+            }
+
+            const leitura = `WIN / IBOV: ${probabilidade} · Score Quântico ${scoreQuantico >= 0 ? '+' : ''}${fmt(scoreQuantico, 1)} · Coerência ${(coerencia * 100).toFixed(0)}%`;
+            const motivo = `<strong>Correlação Macro &amp; Fluxo:</strong> S&amp;P Fut <span>${fmt(sp, 2)}%</span>, VIX <span>${fmt(vix, 2)}</span>, DI <span>${fmt(di, 2)}%</span>, Dólar/DXY <span>${fmt(usdPct || 0, 2)}% / ${fmt(dxyPct || 0, 2)}%</span>, Pesos IBOV <span>${fmt(varPesos, 2)}%</span> e Agressão <span>${agr}</span>.`;
+
+            return { scoreQuantico, probabilidade, conviccao, impactoWIN, leitura, motivo, badgeClass, fluxClass, fluxText, varPesos, ibovBase };
+        }
+
+        function renderRow(tabId, name, item, dec = 2) {
+            const tbody = document.getElementById(tabId);
+            if (!tbody) return;
+            const tr = document.createElement('tr');
+            if (!item || !Number.isFinite(Number(item.price))) {
+                tr.className = 'row-neutro';
+                tr.innerHTML = `<td class="text-[11px] font-medium text-left">${name}</td><td colspan="2" class="text-[10px] italic text-slate-400">Sem cotação</td>`;
+                tbody.appendChild(tr);
+                return;
+            }
+            const price = Number(item.price);
+            const change = Number.isFinite(Number(item.change)) ? Number(item.change) : 0;
+            const isUp = change >= 0;
+            tr.className = isUp ? 'row-alta' : 'row-baixa';
+            tr.innerHTML = `
+                <td class="text-[11px] font-medium text-left">${name}</td>
+                <td class="font-mono text-[11px]">${fmt(price, dec)}</td>
+                <td class="font-mono text-[11px] font-bold">${isUp ? '+' : ''}${fmt(change, 2)}%</td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function polarToCartesian(cx, cy, r, angleDeg) {
+            const rad = ((angleDeg - 90) * Math.PI) / 180.0;
+            return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+        }
+
+        function describeAnnularSector(cx, cy, rIn, rOut, startAngle, endAngle) {
+            const p1 = polarToCartesian(cx, cy, rOut, endAngle);
+            const p2 = polarToCartesian(cx, cy, rOut, startAngle);
+            const p3 = polarToCartesian(cx, cy, rIn, startAngle);
+            const p4 = polarToCartesian(cx, cy, rIn, endAngle);
+            const largeArc = (endAngle - startAngle) > 180 ? 1 : 0;
+            return [
+                `M ${p1.x} ${p1.y}`,
+                `A ${rOut} ${rOut} 0 ${largeArc} 0 ${p2.x} ${p2.y}`,
+                `L ${p3.x} ${p3.y}`,
+                `A ${rIn} ${rIn} 0 ${largeArc} 1 ${p4.x} ${p4.y}`,
+                'Z'
+            ].join(' ');
+        }
+
+        function atualizarMapaEPontosIBOV(ibovBase) {
+            const heatmapEl = document.getElementById('ticker_heatmap');
+            const sectorEl = document.getElementById('sector_part');
+            if (!heatmapEl || !sectorEl) return;
+
+            const tickers = JSON.parse(heatmapEl.textContent || '{}');
+            const setores = JSON.parse(sectorEl.textContent || '{}');
+            const basePts = Number.isFinite(Number(ibovBase)) && Number(ibovBase) > 0 ? Number(ibovBase) : 167537.95;
+
+            // 1. Mapa Ibovespa (Treemap via Plotly conforme imagem do Mapa Ibovespa)
+            if (typeof Plotly !== 'undefined') {
+                const ids = ['IBOV'];
+                const labels = ['IBOV'];
+                const parents = [''];
+                const values = [100];
+                const textos = [`IBOV: ${fmt(basePts, 2)} pts`];
+                const cores = ['#3f1d20'];
+
+                const porSetor = {};
+                Object.entries(tickers).forEach(([sym, info]) => {
+                    const sec = info.sector || 'Outros';
+                    const part = parseFloat(info.part) || 0;
+                    const chg = parseFloat(info.netchange) || 0;
+                    if (part <= 0) return;
+
+                    if (!porSetor[sec]) porSetor[sec] = { partSum: 0, contribSum: 0 };
+                    porSetor[sec].partSum += part;
+                    porSetor[sec].contribSum += (part / 100) * (chg / 100) * basePts;
+
+                    ids.push(`sec-${sec}-${sym}`);
+                    labels.push(`${sym}\n${chg >= 0 ? '+' : ''}${fmt(chg, 2)}%`);
+                    parents.push(`sec-${sec}`);
+                    values.push(part);
+                    textos.push(`${sym} (${info.name || ''}) | Peso: ${fmt(part, 2)}% | Var: ${chg >= 0 ? '+' : ''}${fmt(chg, 2)}%`);
+                    cores.push(chg > 0 ? '#16a34a' : (chg < 0 ? '#dc2626' : '#334155'));
+                });
+
+                Object.entries(porSetor).forEach(([sec, st]) => {
+                    const secPart = setores[sec] && Number.isFinite(Number(setores[sec].part)) ? Number(setores[sec].part) : st.partSum;
+                    ids.push(`sec-${sec}`);
+                    labels.push(`${sec}\n${fmt(secPart, 1)}%`);
+                    parents.push('IBOV');
+                    values.push(secPart);
+                    textos.push(`Setor ${sec} | Peso: ${fmt(secPart, 2)}%`);
+                    cores.push(st.contribSum >= 0 ? '#14532d' : '#7f1d1d');
+                });
+
+                Plotly.react('mapa-ibov-treemap', [{
+                    type: 'treemap',
+                    ids, labels, parents, values,
+                    text: textos,
+                    hoverinfo: 'text',
+                    marker: { colors: cores, line: { width: 1.5, color: '#0f172a' } },
+                    textfont: { family: 'JetBrains Mono, monospace', size: 11, color: '#f8fafc' },
+                    pathbar: { visible: true, bgColor: '#0f172a', bordercolor: '#334155', font: { color: '#f8fafc', size: 10 } }
+                }], {
+                    margin: { t: 6, l: 4, r: 4, b: 4 },
+                    paper_bgcolor: 'transparent',
+                    plot_bgcolor: 'transparent'
+                }, { responsive: true, displayModeBar: false });
+            }
+
+            // 2. Ibovespa Pontos (Anel setorial escuro + fatias radiais por ativo conforme imagem Ibovespa pontos)
+            const radialHost = document.getElementById('ibov-pontos-radial');
+            if (!radialHost) return;
+
+            const entries = Object.entries(tickers)
+                .map(([sym, info]) => ({
+                    sym,
+                    sector: info.sector || 'Outros',
+                    part: parseFloat(info.part) || 0,
+                    chg: parseFloat(info.netchange) || 0
+                }))
+                .filter(x => x.part > 0)
+                .sort((a, b) => b.part - a.part);
+
+            const totalPart = entries.reduce((s, x) => s + x.part, 0) || 1;
+            const saldoPontos = entries.reduce((acc, x) => acc + (x.part / 100) * (x.chg / 100) * basePts, 0);
+
+            const cx = 220, cy = 190, rInnerIn = 34, rInnerOut = 86, rOuterIn = 88, rOuterOut = 162;
+            let currentAngle = 0;
+            let svgPaths = '';
+            let svgLabels = '';
+
+            const secOrder = [
+                'Financeiro',
+                'Petróleo, Gás e Biocombustíveis',
+                'Materiais Básicos',
+                'Consumo não Cíclico',
+                'Utilidade Pública',
+                'Consumo Cíclico',
+                'Bens Industriais',
+                'Saúde',
+                'Comunicações',
+                'Tecnologia da Informação'
+            ];
+
+            const secMap = {};
+            entries.forEach(item => {
+                if (!secMap[item.sector]) {
+                    secMap[item.sector] = { name: item.sector, items: [], part: 0, contrib: 0 };
+                }
+                secMap[item.sector].items.push(item);
+                secMap[item.sector].part += item.part;
+                secMap[item.sector].contrib += (item.part / 100) * (item.chg / 100) * basePts;
+            });
+
+            const orderedSectors = [
+                ...secOrder.filter(s => secMap[s]),
+                ...Object.keys(secMap).filter(s => !secOrder.includes(s))
+            ];
+
+            orderedSectors.forEach(secName => {
+                const secObj = secMap[secName];
+                const secSpanDeg = (secObj.part / totalPart) * 360;
+                const secStart = currentAngle;
+                const secEnd = currentAngle + secSpanDeg;
+
+                svgPaths += `<path d="${describeAnnularSector(cx, cy, rInnerIn, rInnerOut, secStart, secEnd)}" fill="#1f242d" stroke="#0f172a" stroke-width="1.2"><title>${secName}: Peso ${fmt(secObj.part, 2)}%</title></path>`;
+
+                if (secSpanDeg >= 16) {
+                    const midSec = polarToCartesian(cx, cy, (rInnerIn + rInnerOut) / 2, (secStart + secEnd) / 2);
+                    const angSec = (secStart + secEnd) / 2;
+                    const rotSec = angSec > 180 ? angSec + 90 : angSec - 90;
+                    const shortSec = secName.length > 18 ? secName.slice(0, 16) + '…' : secName;
+                    svgLabels += `<text x="${midSec.x}" y="${midSec.y}" fill="#e2e8f0" font-size="7.5" font-weight="600" text-anchor="middle" dominant-baseline="central" transform="rotate(${rotSec}, ${midSec.x}, ${midSec.y})">${shortSec}</text>`;
+                }
+
+                let itemAngle = secStart;
+                secObj.items.forEach(it => {
+                    const itSpan = (it.part / totalPart) * 360;
+                    const itStart = itemAngle;
+                    const itEnd = itemAngle + itSpan;
+
+                    let itFill = '#334155';
+                    if (it.chg < 0) {
+                        itFill = Math.abs(it.chg) >= 2.2 ? '#ef4444' : (Math.abs(it.chg) >= 1.2 ? '#991b1b' : '#5c2428');
+                    } else if (it.chg > 0) {
+                        itFill = it.chg >= 1.5 ? '#16a34a' : '#1f3d2b';
+                    }
+
+                    const ptsContrib = (it.part / 100) * (it.chg / 100) * basePts;
+                    svgPaths += `<path d="${describeAnnularSector(cx, cy, rOuterIn, rOuterOut, itStart, itEnd)}" fill="${itFill}" stroke="#0f172a" stroke-width="1"><title>${it.sym}: ${it.chg >= 0 ? '+' : ''}${fmt(it.chg, 2)}% | Peso ${fmt(it.part, 2)}% | ${ptsContrib >= 0 ? '+' : ''}${fmt(ptsContrib, 0)} pts</title></path>`;
+
+                    if (itSpan >= 5.5) {
+                        const midAng = (itStart + itEnd) / 2;
+                        const pLbl = polarToCartesian(cx, cy, (rOuterIn + rOuterOut) / 2, midAng);
+                        const rot = midAng > 180 ? midAng + 90 : midAng - 90;
+                        const fSize = itSpan >= 14 ? 10 : (itSpan >= 9 ? 8.5 : 6.5);
+                        svgLabels += `<text x="${pLbl.x}" y="${pLbl.y}" fill="#f8fafc" font-size="${fSize}" font-weight="700" font-family="JetBrains Mono, monospace" text-anchor="middle" dominant-baseline="central" transform="rotate(${rot}, ${pLbl.x}, ${pLbl.y})">${it.sym}</text>`;
+                    }
+
+                    itemAngle = itEnd;
+                });
+
+                currentAngle = secEnd;
+            });
+
+            radialHost.innerHTML = `
+                <svg viewBox="0 0 440 380" class="w-full h-full max-h-[380px] select-none">
+                    ${svgPaths}
+                    <circle cx="${cx}" cy="${cy}" r="${rInnerIn - 1}" fill="#181b20" stroke="#0f172a" stroke-width="1.5"></circle>
+                    ${svgLabels}
+                </svg>
+            `;
+
+            const totEl = document.getElementById('ibov-pontos-total');
+            if (totEl) {
+                totEl.innerText = `Impacto Est.: ${saldoPontos >= 0 ? '+' : ''}${fmt(saldoPontos, 0)} pts`;
+                totEl.className = `text-[9px] font-mono font-bold ${saldoPontos >= 0 ? 'text-green-400' : 'text-red-400'}`;
+            }
+        }
+
+        function atualizarTabelasEFavoritos(d, fxData) {
+            const ids = ['tb-americas', 'tb-europa', 'tb-futuros', 'tb-commodities', 'tb-moedas', 'tb-b3'];
+            ids.forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
+
+            const spVal = Number.isFinite(Number(d.sp_fut_pct)) ? Number(d.sp_fut_pct) : (Number.isFinite(Number(d.sp_pct)) ? Number(d.sp_pct) : 0.55);
+            const vixVal = Number.isFinite(Number(d.vix)) ? Number(d.vix) : 21.33;
+            const closeVal = Number.isFinite(Number(d.ibov_close_d1)) ? Number(d.ibov_close_d1) : Number(d.close);
+
+            const histRows = Array.isArray(d.history) ? d.history : (Array.isArray(d.historico) ? d.historico : []);
+            const topHist = histRows.length ? histRows[0] : null;
+            const prevHist = histRows.length > 1 ? histRows[1] : null;
+
+            const ibovDiaRaw = Number.isFinite(Number(d.ibov_last)) && Number(d.ibov_last) > 0
+                ? Number(d.ibov_last)
+                : (topHist ? parseFloat(topHist.fechamento ?? topHist.close) : closeVal);
+
+            const ibovRefPrevRaw = Number.isFinite(Number(d.ibov_prev)) && Number(d.ibov_prev) > 0
+                ? Number(d.ibov_prev)
+                : (prevHist ? parseFloat(prevHist.fechamento ?? prevHist.close) : closeVal);
+
+            const ibovDiaChg = ibovRefPrevRaw > 0 ? ((ibovDiaRaw - ibovRefPrevRaw) / ibovRefPrevRaw) * 100 : 0;
+
+            const usd = fxData && fxData.USDBRL ? { price: parseFloat(fxData.USDBRL.bid), change: parseFloat(fxData.USDBRL.pctChange) } : null;
+            const eur = fxData && fxData.EURBRL ? { price: parseFloat(fxData.EURBRL.bid), change: parseFloat(fxData.EURBRL.pctChange) } : null;
+            const gbp = fxData && fxData.GBPBRL ? { price: parseFloat(fxData.GBPBRL.bid), change: parseFloat(fxData.GBPBRL.pctChange) } : null;
+
+            const dxyItem = d.dxy || REF_FALLBACK.dxy;
+            const wtiItem = d.wti || REF_FALLBACK.wti;
+            const brentItem = d.brent || REF_FALLBACK.brent;
+            const bcomItem = d.bcom || REF_FALLBACK.bcom;
+            const nasdaqItem = d.nasdaq || REF_FALLBACK.nasdaq;
+            const indFutItem = d.indfut || REF_FALLBACK.indfut;
+            const dolFutItem = d.dolfut || REF_FALLBACK.dolfut;
+            const di27Item = d.di1f27 || REF_FALLBACK.di1f27;
+            const di28Item = d.di1f28 || REF_FALLBACK.di1f28;
+
+            renderRow('tb-americas', 'S&P 500 Fut (%)', { price: spVal, change: spVal }, 2);
+            renderRow('tb-americas', 'NASDAQ', nasdaqItem, 2);
+            renderRow('tb-americas', 'VIX', { price: vixVal, change: 20 - vixVal }, 2);
+
+            renderRow('tb-europa', 'DI1F27 (Juros)', di27Item, 2);
+            renderRow('tb-europa', 'DI1F28 (Juros)', di28Item, 2);
+            renderRow('tb-europa', 'EUR/BRL', eur, 4);
+
+            renderRow('tb-futuros', 'INDFUT (Ref.)', indFutItem, 0);
+            renderRow('tb-futuros', 'DOLFUT', dolFutItem, 2);
+
+            renderRow('tb-commodities', 'WTI', wtiItem, 2);
+            renderRow('tb-commodities', 'Brent', brentItem, 2);
+            renderRow('tb-commodities', 'BCOM', bcomItem, 2);
+
+            renderRow('tb-moedas', 'DXY', dxyItem, 3);
+            renderRow('tb-moedas', 'USD/BRL', usd, 4);
+            renderRow('tb-moedas', 'GBP/BRL', gbp, 4);
+
+            renderRow('tb-b3', 'IBOV (~15m)', { price: ibovDiaRaw, change: ibovDiaChg }, 2);
+            renderRow('tb-b3', 'VALE3 (14,9%)', { price: 59.00, change: -2.22 }, 2);
+            renderRow('tb-b3', 'PETR4 (7,1%)', { price: 43.17, change: -1.84 }, 2);
+            renderRow('tb-b3', 'ITUB4 (6,4%)', { price: 40.19, change: -1.71 }, 2);
+
+            const favContainer = document.getElementById('favorites-bar');
+            const favs = [
+                { name: 'IBOV (~15m)', price: fmt(ibovDiaRaw, 2), change: `${ibovDiaChg >= 0 ? '+' : ''}${fmt(ibovDiaChg, 2)}%`, up: ibovDiaChg >= 0 },
+                { name: 'S&P FUT', price: `${spVal >= 0 ? '+' : ''}${fmt(spVal, 2)}%`, change: 'Fluxo Ext.', up: spVal >= 0 },
+                { name: 'VIX', price: fmt(vixVal, 2), change: vixVal >= 22 ? 'Cautela' : 'Vol EUA', up: vixVal < 22 },
+                { name: 'DXY', price: fmt(Number(dxyItem.price), 3), change: `${Number(dxyItem.change) >= 0 ? '+' : ''}${fmt(Number(dxyItem.change), 2)}%`, up: Number(dxyItem.change) <= 0 },
+                { name: 'USD/BRL', price: usd ? `R$ ${fmt(usd.price, 4)}` : '--', change: usd ? `${usd.change >= 0 ? '+' : ''}${fmt(usd.change, 2)}%` : '--', up: usd ? usd.change <= 0 : true },
+                { name: 'WTI', price: fmt(Number(wtiItem.price), 2), change: `${Number(wtiItem.change) >= 0 ? '+' : ''}${fmt(Number(wtiItem.change), 2)}%`, up: Number(wtiItem.change) >= 0 }
+            ];
+            favContainer.innerHTML = favs.map(f => `
+                <div class="highlight-card ${f.up ? 'up' : 'down'} flex flex-col justify-center">
+                    <div class="text-[9px] text-slate-300 font-bold uppercase">${f.name}</div>
+                    <div class="text-xs font-mono font-bold text-white mt-0.5">${f.price}</div>
+                    <div class="text-[10px] font-bold font-mono ${f.up ? 'text-green-500' : 'text-red-500'}">${f.change}</div>
+                </div>
+            `).join('');
+
+            atualizarMapaEPontosIBOV(ibovDiaRaw);
+        }
+
+        function calcFiboLevels(min, max) {
+            const R = max - min;
+            return {
+                neg11: tick5(min + R * (-0.118)),
+                low:   tick5(min),
+                f50:   tick5(min + R * 0.50),
+                f618:  tick5(min + R * 0.618),
+                high:  tick5(max),
+                pos111: tick5(min + R * 1.118)
+            };
+        }
+
+        function atualizarPainelFibo(highIn, lowIn, closeIn, openProj) {
+            let high = parseFloat(highIn);
+            let low = parseFloat(lowIn);
+            let close = parseFloat(closeIn);
+
+            if (!Number.isFinite(high) || !Number.isFinite(low) || Math.abs(high - low) < 5) {
+                high = 171750;
+                low = 169300;
+            }
+            if (low > high) { const tmp = high; high = low; low = tmp; }
+            if (!Number.isFinite(close) || close <= 0) close = 169817;
+
+            const f = calcFiboLevels(low, high);
+
+            document.getElementById('val-justo').innerText = fmt(close, 0);
+            document.getElementById('val-resist').innerText = fmt(high, 0);
+            document.getElementById('val-suport').innerText = fmt(low, 0);
+            document.getElementById('val-fibo-neg11').innerText = fmt(f.neg11, 0);
+            document.getElementById('val-fibo-50').innerText = fmt(f.f50, 0);
+            document.getElementById('val-fibo').innerText = fmt(f.f618, 0);
+            document.getElementById('val-fibo-111').innerText = fmt(f.pos111, 0);
+
+            const range = high - low;
+            const visualMin = low - (range * 0.118);
+            const visualMax = high + (range * 0.118);
+            const visualSpan = visualMax - visualMin || 1;
+            const getPos = (val) => clamp(((val - visualMin) / visualSpan) * 100, 3, 97);
+
+            const ruler = document.getElementById('fibo-ruler');
+            ruler.innerHTML = `
+                <div class="absolute left-4 right-4 top-1/2 h-0.5 bg-slate-600 rounded"></div>
+                <div class="absolute -translate-x-1/2 flex flex-col items-center" style="left: ${getPos(f.neg11)}%; top: 50%; transform: translate(-50%, -50%);">
+                    <div class="text-[9px] text-green-400 font-bold mb-1">-11.8%</div>
+                    <div class="w-3 h-3 rounded-full bg-green-500 border-2 border-[#0f172a] z-10"></div>
+                    <div class="text-[10px] text-white font-mono mt-1">${fmt(f.neg11, 0)}</div>
+                </div>
+                <div class="absolute -translate-x-1/2 flex flex-col items-center" style="left: ${getPos(low)}%; top: 50%; transform: translate(-50%, -50%);">
+                    <div class="text-[9px] text-slate-400 font-bold mb-1">Mínima</div>
+                    <div class="w-3 h-3 rounded-full bg-slate-400 border-2 border-[#0f172a] z-10"></div>
+                    <div class="text-[10px] text-white font-mono mt-1">${fmt(low, 0)}</div>
+                </div>
+                <div class="absolute -translate-x-1/2 flex flex-col items-center" style="left: ${getPos(f.f50)}%; top: 50%; transform: translate(-50%, -50%);">
+                    <div class="text-[9px] text-orange-400 font-bold mb-1">50.0%</div>
+                    <div class="w-3 h-3 rounded-full bg-orange-500 border-2 border-[#0f172a] z-10"></div>
+                    <div class="text-[10px] text-white font-mono mt-1">${fmt(f.f50, 0)}</div>
+                </div>
+                <div class="absolute -translate-x-1/2 flex flex-col items-center" style="left: ${getPos(f.f618)}%; top: 50%; transform: translate(-50%, -50%);">
+                    <div class="text-[9px] text-cyan-400 font-bold mb-1">61.8%</div>
+                    <div class="w-3 h-3 rounded-full bg-cyan-500 border-2 border-[#0f172a] z-10"></div>
+                    <div class="text-[10px] text-white font-mono mt-1">${fmt(f.f618, 0)}</div>
+                </div>
+                <div class="absolute -translate-x-1/2 flex flex-col items-center" style="left: ${getPos(high)}%; top: 50%; transform: translate(-50%, -50%);">
+                    <div class="text-[9px] text-slate-400 font-bold mb-1">Máxima</div>
+                    <div class="w-3 h-3 rounded-full bg-slate-400 border-2 border-[#0f172a] z-10"></div>
+                    <div class="text-[10px] text-white font-mono mt-1">${fmt(high, 0)}</div>
+                </div>
+                <div class="absolute -translate-x-1/2 flex flex-col items-center" style="left: ${getPos(f.pos111)}%; top: 50%; transform: translate(-50%, -50%);">
+                    <div class="text-[9px] text-red-400 font-bold mb-1">+111.8%</div>
+                    <div class="w-3 h-3 rounded-full bg-red-500 border-2 border-[#0f172a] z-10"></div>
+                    <div class="text-[10px] text-white font-mono mt-1">${fmt(f.pos111, 0)}</div>
+                </div>
+                ${Number.isFinite(openProj) ? `<div class="absolute -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white border-2 border-cyan-400 z-20" style="left:${getPos(openProj)}%;top:50%" title="Abertura teórica: ${fmt(tick5(openProj), 0)}"></div>` : ''}
+            `;
+
+            document.getElementById('fibo-grid-n5').innerHTML = `
+                <div class="fibo-item fibo-overbought !bg-[#0f172a]"><span>+111,8% Exaustão Compra</span><strong class="!text-red-400">${fmt(f.pos111, 0)}</strong></div>
+                <div class="fibo-item !bg-[#0f172a]"><span>100% Topo Ref.</span><strong>${fmt(high, 0)}</strong></div>
+                <div class="fibo-item !bg-[#0f172a]"><span>61,8% Defesa Inst.</span><strong class="!text-cyan-400">${fmt(f.f618, 0)}</strong></div>
+                <div class="fibo-item fibo-attention !bg-[#0f172a]"><span>50,0% Inflexão</span><strong class="!text-orange-400">${fmt(f.f50, 0)}</strong></div>
+                <div class="fibo-item !bg-[#0f172a]"><span>0% Fundo Ref.</span><strong>${fmt(low, 0)}</strong></div>
+                <div class="fibo-item fibo-oversold !bg-[#0f172a]"><span>-11,8% Exaustão Venda</span><strong class="!text-green-400">${fmt(f.neg11, 0)}</strong></div>
+            `;
+            document.getElementById('fib-range-lbl').innerText = `${fmt(low, 0)} → ${fmt(high, 0)} (${fmt(range, 0)} pts)`;
+        }
+
+        function recalcularShark() {
+            const close = parseFloat(document.getElementById('in-close').value) || 0;
+            const highD1 = parseFloat(document.getElementById('in-high').value) || 0;
+            const lowD1 = parseFloat(document.getElementById('in-low').value) || 0;
+            const ampInput = parseFloat(document.getElementById('in-amp').value);
+            const amp = Number.isFinite(ampInput) && ampInput > 0 ? Math.abs(ampInput) : Math.abs(highD1 - lowD1);
+            const sp = parseFloat(document.getElementById('in-sp').value) || 0;
+            const vix = parseFloat(document.getElementById('in-vix').value) || 20;
+            const di = parseFloat(document.getElementById('in-di').value) || 0;
+            const agr = parseFloat(document.getElementById('in-agr').value) || 0;
+
+            document.getElementById('in-amp').value = Math.round(amp);
+
+            const gap = 0.8 * sp - 0.3 * di - 0.02 * (vix - 20);
+            const openProj = close * (1 + gap / 100);
+
+            const ia = calcularInteligenciaQuanticaWIN({
+                sp,
+                vix,
+                di,
+                agr,
+                usdPct: window._lastFxUsdPct ?? 1.82,
+                dxyPct: REF_FALLBACK.dxy.change,
+                wtiPct: REF_FALLBACK.wti.change,
+                ibovBase: close
+            });
+
+            const minProj = openProj - amp * (0.5 - ia.scoreQuantico / 400);
+            const maxProj = openProj + amp * (0.5 + ia.scoreQuantico / 400);
+
+            document.getElementById('out-preco-teorico').innerText = `${fmt(tick5(openProj), 0)} (${gap >= 0 ? '+' : ''}${fmt(gap, 2)}%)`;
+            document.getElementById('out-minmax-proj').innerText = `${fmt(tick5(minProj), 0)} / ${fmt(tick5(maxProj), 0)}`;
+
+            const scoreEl = document.getElementById('out-score-local');
+            scoreEl.innerText = `${ia.scoreQuantico >= 0 ? '+' : ''}${fmt(ia.scoreQuantico, 1)}`;
+            scoreEl.className = `font-mono font-bold ${ia.scoreQuantico >= 18 ? 'text-green-400' : ia.scoreQuantico <= -18 ? 'text-red-400' : 'text-orange-400'}`;
+
+            document.getElementById('hound-dir').innerText = ia.probabilidade;
+            document.getElementById('hound-dir').className = `hound-badge ${ia.badgeClass}`;
+            document.getElementById('hound-int').innerText = ia.conviccao;
+            document.getElementById('hound-int').className = `hound-badge ${ia.badgeClass}`;
+            document.getElementById('hound-reading').innerText = ia.leitura;
+            document.getElementById('hound-reason').innerHTML = ia.motivo;
+            document.getElementById('hound-impacto-win').innerText = ia.impactoWIN;
+            document.getElementById('flux-indicator').className = `flux-indicator ${ia.fluxClass}`;
+            document.getElementById('flux-text').innerText = ia.fluxText;
+
+            document.getElementById('hound-score-duplo').innerText = `${fmt(ia.scoreQuantico, 1)} / Gap ${fmt(gap, 2)}%`;
+            const pctCompra = clamp(50 + ia.scoreQuantico / 2, 5, 95);
+            document.getElementById('agressao-compra').style.width = `${pctCompra}%`;
+            document.getElementById('agressao-venda').style.width = `${100 - pctCompra}%`;
+
+            const baseLow = (fibUseD1 && highD1 > lowD1) ? Math.min(lowD1, highD1) : minProj;
+            const baseHigh = (fibUseD1 && highD1 > lowD1) ? Math.max(lowD1, highD1) : maxProj;
+            document.getElementById('fib-title-n5').innerText = (fibUseD1 && highD1 > lowD1)
+                ? 'N5 • Fibo Interativo (Cálculo Exato sobre D-1)'
+                : 'N5 • Fibo Interativo (Amplitude Projetada)';
+
+            atualizarPainelFibo(baseHigh, baseLow, close, openProj);
+            try { localStorage.setItem('acp_shark_v3', JSON.stringify(['close','high','low','amp','sp','vix','di','agr'].map(k => document.getElementById('in-' + k).value))); } catch (e) {}
+        }
+
+        function preencherInputs(high, low, close) {
+            document.getElementById('in-close').value = Math.round(close);
+            document.getElementById('in-high').value = Math.round(high);
+            document.getElementById('in-low').value = Math.round(low);
+            document.getElementById('in-amp').value = Math.round(Math.abs(high - low));
+            recalcularShark();
+        }
+
+        function renderHistorico(hist, last, prev) {
+            if (!Array.isArray(hist) || !hist.length) return;
+            if (Number.isFinite(Number(last)) && Number.isFinite(Number(prev)) && Number(prev) > 0) {
+                const diff = Number(last) - Number(prev);
+                const pct = (diff / Number(prev)) * 100;
+                document.getElementById('hist-quote').innerHTML = `IBOV: <b class="text-white">${fmt(Number(last), 2)}</b> <span class="${diff >= 0 ? 'text-green-400' : 'text-red-400'}">${diff >= 0 ? '+' : ''}${fmt(diff, 2)} (${fmt(pct, 2)}%)</span>`;
+            }
+            const tbody = document.getElementById('tb-historico-ibov');
+            tbody.innerHTML = hist.map(r => {
+                const dt = r.data || r.date || '--';
+                const op = parseFloat(r.abertura ?? r.open ?? 0);
+                const hi = parseFloat(r.maxima ?? r.high ?? 0);
+                const lo = parseFloat(r.minima ?? r.low ?? 0);
+                const cl = parseFloat(r.fechamento ?? r.close ?? 0);
+                const vol = r.volume || '-';
+                const amp = Math.abs(hi - lo);
+                const chgUp = cl >= op;
+                return `
+                    <tr class="cursor-pointer hover:bg-slate-800 transition-colors" onclick="preencherInputs(${hi}, ${lo}, ${cl})">
+                        <td class="text-[11px] font-medium text-left text-white">${dt}</td>
+                        <td class="font-mono text-[11px]">${fmt(op, 2)}</td>
+                        <td class="font-mono text-[11px] text-green-500">${fmt(hi, 2)}</td>
+                        <td class="font-mono text-[11px] text-red-500">${fmt(lo, 2)}</td>
+                        <td class="font-mono text-[11px] font-bold ${chgUp ? 'text-green-400' : 'text-red-400'}">${fmt(cl, 2)}</td>
+                        <td class="font-mono text-[11px] text-slate-400">${fmt(amp, 0)} pts</td>
+                        <td class="font-mono text-[11px] text-slate-400">${typeof vol === 'number' ? vol.toLocaleString('pt-BR') : vol}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function fetchDados(fxData = null) {
+            let d = null;
+            try {
+                const res = await getJSON(API_URL, 15000);
+                if (res && (res.ok || res.ibov_close_d1 || res.close)) {
+                    d = { ...REF_FALLBACK, ...res };
+                    lastApiUpdate = Date.now();
+                    document.getElementById('n1-status').innerText = 'Atualizado via Render';
+                }
+            } catch (e) {
+                console.warn("API_URL indisponível, usando referência consolidada:", e);
+            }
+
+            if (!d) {
+                d = REF_FALLBACK;
+                document.getElementById('n1-status').innerText = 'Referência Consolidada';
+            }
+
+            const high = parseFloat(d.ibov_high_d1 ?? d.high);
+            const low = parseFloat(d.ibov_low_d1 ?? d.low);
+            const close = parseFloat(d.ibov_close_d1 ?? d.close);
+            const sp = parseFloat(d.sp_fut_pct ?? d.sp_pct ?? 0.55);
+            const vix = parseFloat(d.vix ?? 21.33);
+            const amp = Math.round(Math.abs(high - low));
+
+            document.getElementById('in-close').value = Math.round(close);
+            document.getElementById('in-high').value = Math.round(high);
+            document.getElementById('in-low').value = Math.round(low);
+            document.getElementById('in-amp').value = amp;
+            document.getElementById('in-sp').value = sp;
+            document.getElementById('in-vix').value = vix;
+
+            document.getElementById('n1-cards').innerHTML = `
+                <div class="highlight-card ${sp >= 0 ? 'up' : 'down'}">
+                    <div class="text-[9px] text-slate-300 font-bold uppercase">S&amp;P 500 Fut</div>
+                    <div class="text-xs font-mono font-bold text-white mt-0.5">${fmt(sp, 2)}%</div>
+                </div>
+                <div class="highlight-card ${vix < 22 ? 'up' : 'down'}">
+                    <div class="text-[9px] text-slate-300 font-bold uppercase">VIX</div>
+                    <div class="text-xs font-mono font-bold text-white mt-0.5">${fmt(vix, 2)}</div>
+                </div>
+                <div class="highlight-card ${close >= low ? 'up' : 'down'}">
+                    <div class="text-[9px] text-slate-300 font-bold uppercase">IBOV Close D-1</div>
+                    <div class="text-xs font-mono font-bold text-white mt-0.5">${fmt(close, 0)}</div>
+                </div>
+                <div class="highlight-card ${amp > 2000 ? 'down' : 'up'}">
+                    <div class="text-[9px] text-slate-300 font-bold uppercase">Amplitude D-1</div>
+                    <div class="text-xs font-mono font-bold text-white mt-0.5">${fmt(amp, 0)} pts</div>
+                </div>
+            `;
+
+            renderHistorico(d.history || d.historico, d.ibov_last, d.ibov_prev);
+            atualizarTabelasEFavoritos(d, fxData);
+            recalcularShark();
+        }
+
+        async function carregarCambio() {
+            try {
+                const data = await getJSON('https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL,JPY-BRL,GBP-BRL,BTC-BRL');
+                if (data && data.USDBRL) window._lastFxUsdPct = parseFloat(data.USDBRL.pctChange);
+                const cards = [
+                    { key: 'USDBRL', name: 'USD/BRL', dec: 4 },
+                    { key: 'EURBRL', name: 'EUR/BRL', dec: 4 },
+                    { key: 'GBPBRL', name: 'GBP/BRL', dec: 4 },
+                    { key: 'BTCBRL', name: 'BTC/BRL', dec: 0 }
+                ];
+                document.getElementById('n4-cards').innerHTML = cards.map(c => {
+                    const q = data[c.key];
+                    if (!q) return '';
+                    const isUp = parseFloat(q.pctChange) >= 0;
+                    const color = isUp ? 'text-green-500' : 'text-red-500';
+                    return `
+                        <div class="highlight-card ${isUp ? 'up' : 'down'} flex flex-col justify-center">
+                            <div class="text-[9px] text-slate-300 font-bold uppercase">${c.name}</div>
+                            <div class="text-sm font-mono font-bold text-white mt-0.5">R$ ${fmt(parseFloat(q.bid), c.dec)}</div>
+                            <div class="text-[10px] font-bold font-mono ${color}">${isUp ? '+' : ''}${q.pctChange}%</div>
+                        </div>
+                    `;
+                }).join('');
+                document.getElementById('n4-status').innerText = 'Atualizado ' + new Date().toLocaleTimeString('pt-BR');
+                return data;
+            } catch (e) {
+                document.getElementById('n4-status').innerText = 'Offline';
+                return null;
+            }
+        }
+
+        async function carregarMacroBCB() {
+            let ok = 0;
+            await Promise.all(BCB_SERIES.map(async s => {
+                try {
+                    const r = await getJSON(`https://api.bcb.gov.br/dados/serie/bcdata.sgs.${s.id}/dados/ultimos/1?formato=json`);
+                    const v = parseFloat(r[0].valor);
+                    document.getElementById(s.el).innerText = `${fmt(v, 2)}%`;
+                    document.getElementById(s.dateEl).innerText = `${s.unit} · ${r[0].data}`;
+                    ok++;
+                } catch (e) {
+                    document.getElementById(s.el).innerText = `${fmt(s.val, 2)}%`;
+                    document.getElementById(s.dateEl).innerText = `${s.unit} · Ref.`;
+                }
+            }));
+            document.getElementById('bcb-status').innerText = ok === BCB_SERIES.length ? 'Atualizado' : 'Referência BCB';
+        }
+
+        async function fetchRSSNews() {
+            const container = document.getElementById('news-container');
+            if (!container) return;
+            try {
+                const allNews = [];
+                for (const source of RSS_SOURCES) {
+                    const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}&count=10`;
+                    const res = await fetch(rss2jsonUrl);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.status === 'ok' && data.items) {
+                            data.items.forEach(item => {
+                                allNews.push({
+                                    title: item.title,
+                                    link: item.link,
+                                    pubDate: new Date(item.pubDate),
+                                    source: source.name
+                                });
+                            });
+                        }
+                    }
+                }
+                allNews.sort((a, b) => b.pubDate - a.pubDate);
+                container.innerHTML = '';
+                allNews.slice(0, 20).forEach(news => {
+                    const div = document.createElement('div');
+                    div.className = 'news-item';
+                    const timeStr = news.pubDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    div.innerHTML = `
+                        <div class="news-time">${timeStr}</div>
+                        <a href="${news.link}" target="_blank" class="news-title hover:underline">${news.title}</a>
+                        <span class="news-source">${news.source}</span>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (error) {
+                console.error("Erro ao buscar notícias:", error);
+                container.innerHTML = '<div class="text-xs text-slate-400 p-2">Não foi possível carregar as notícias no momento.</div>';
+            }
+        }
+
+        function configurarGraficoTV(symbol = "BMFBOVESPA:WIN1!") {
+            const host = document.getElementById('tradingview_widget');
+            host.innerHTML = '';
+            new TradingView.widget({
+                "autosize": true,
+                "symbol": symbol,
+                "interval": "15",
+                "timezone": "America/Sao_Paulo",
+                "theme": "dark",
+                "style": "1",
+                "locale": "br",
+                "enable_publishing": false,
+                "hide_side_toolbar": false,
+                "allow_symbol_change": false,
+                "container_id": "tradingview_widget",
+                "studies": ["RSI@tv-basicstudies", "MASimple@tv-basicstudies"]
+            });
+        }
+
+        setInterval(() => {
+            if (Date.now() - lastApiUpdate > 5 * 60 * 1000) {
+                document.getElementById('watchdog-alert').classList.remove('hidden');
+            }
+        }, 10000);
+
+        window.onload = async () => {
+            configurarGraficoTV();
+            document.getElementById('tv-symbol-select').addEventListener('change', (e) => configurarGraficoTV(e.target.value));
+
+            try {
+                const saved = JSON.parse(localStorage.getItem('acp_shark_v3'));
+                if (Array.isArray(saved)) {
+                    ['close','high','low','amp','sp','vix','di','agr'].forEach((k, i) => {
+                        if (saved[i] !== undefined) document.getElementById('in-' + k).value = saved[i];
+                    });
+                }
+            } catch (e) {}
+
+            const fxData = await carregarCambio();
+            await fetchDados(fxData);
+            carregarMacroBCB();
+            fetchRSSNews();
+
+            setInterval(async () => {
+                const fx = await carregarCambio();
+                await fetchDados(fx);
+            }, 30000);
+            setInterval(carregarMacroBCB, 6 * 3600 * 1000);
+            setInterval(fetchRSSNews, 300000);
+
+            document.getElementById('btn-calcular').addEventListener('click', recalcularShark);
+            ['in-close','in-high','in-low','in-amp','in-sp','in-vix','in-di','in-agr'].forEach(id => {
+                document.getElementById(id).addEventListener('input', recalcularShark);
+            });
+            document.getElementById('fib-mode-btn').addEventListener('click', (e) => {
+                fibUseD1 = !fibUseD1;
+                e.target.innerText = fibUseD1 ? 'Fibo: D-1 Real' : 'Fibo: Projeção';
+                recalcularShark();
+            });
+        };
+    </script>
+
+
+    <!-- JavaScript da camada adicional: consulta somente os endpoints Render existentes/novos -->
+    <script>
+    (() => {
+      'use strict';
+      const SHARK_API = 'https://acp-radar-api.onrender.com/api/shark';
+      const MACRO_API = 'https://acp-radar-api.onrender.com/api/macro';
+      const byId = id => document.getElementById(id);
+      const number = value => {
+        if (value === null || value === undefined || value === '') return null;
+        const parsed = Number(String(value).replace(',', '.'));
+        return Number.isFinite(parsed) ? parsed : null;
+      };
+      const format = (value, digits = 2) => {
+        const parsed = number(value);
+        return parsed === null ? 'N/D' : parsed.toLocaleString('pt-BR', {
+          minimumFractionDigits: digits, maximumFractionDigits: digits
+        });
+      };
+      const formatDate = value => {
+        if (!value) return '--';
+        const date = new Date(String(value).length === 10 ? value + 'T12:00:00' : value);
+        return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString('pt-BR');
+      };
+      async function getJson(url, timeoutMs = 12000) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const response = await fetch(url, {
+            cache: 'no-store', signal: controller.signal,
+            headers: { 'Accept': 'application/json' }
+          });
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          return await response.json();
+        } finally {
+          clearTimeout(timer);
+        }
+      }
+      async function loadFeedHealth() {
+        const status = byId('realtime-status');
+        const detail = byId('feed-detail');
+        const started = performance.now();
+        try {
+          const data = await getJson(SHARK_API, 15000);
+          const latency = Math.round(performance.now() - started);
+          const valid = data && (data.ok === true || number(data.sp_fut_price) !== null || number(data.ibov_close_d1) !== null);
+          byId('feed-latency').textContent = latency + ' ms';
+          byId('feed-last-update').textContent = new Date().toLocaleTimeString('pt-BR');
+          status.textContent = valid ? 'ONLINE' : 'RESPOSTA SEM DADOS';
+          status.className = valid ? 'text-[9px] text-emerald-400 font-mono' : 'text-[9px] text-amber-300 font-mono';
+          detail.textContent = valid
+            ? 'Endpoint Render respondeu. Atualização do painel: ' + new Date().toLocaleString('pt-BR')
+            : 'A API respondeu, mas não confirmou os campos principais de mercado.';
+        } catch (error) {
+          byId('feed-latency').textContent = '--';
+          status.textContent = 'OFFLINE';
+          status.className = 'text-[9px] text-red-400 font-mono';
+          detail.textContent = 'Falha ao consultar /api/shark: ' + (error.name === 'AbortError' ? 'tempo limite excedido' : error.message);
+        }
+      }
+      async function loadMacro() {
+        const status = byId('macro-status');
+        const context = byId('macro-context');
+        try {
+          const data = await getJson(MACRO_API, 15000);
+          const series = data && data.series ? data.series : {};
+          const fields = [
+            ['selic', 'macro2-selic', 'macro2-selic-date', '% a.a.', 2],
+            ['ipca', 'macro2-ipca', 'macro2-ipca-date', '% a.m.', 2],
+            ['usd_ptax', 'macro2-usd', 'macro2-usd-date', 'R$', 4],
+            ['ibc_br', 'macro2-ibc', 'macro2-ibc-date', '', 2]
+          ];
+          fields.forEach(([key, valueId, dateId, unit, digits]) => {
+            const item = series[key] || {};
+            const value = number(item.value);
+            let rendered = value === null ? 'N/D' : format(value, digits);
+            if (value !== null && unit === 'R$') rendered = 'R$ ' + rendered;
+            else if (value !== null && unit) rendered += ' ' + unit;
+            byId(valueId).textContent = rendered;
+            byId(dateId).textContent = 'Obs.: ' + formatDate(item.date);
+          });
+          const parts = [];
+          if (number(series.selic && series.selic.value) !== null) parts.push('Meta Selic: ' + format(series.selic.value) + '% a.a.');
+          if (number(series.ipca && series.ipca.value) !== null) parts.push('IPCA mensal: ' + format(series.ipca.value) + '%.');
+          if (number(series.usd_ptax && series.usd_ptax.value) !== null) parts.push('PTAX venda: R$ ' + format(series.usd_ptax.value, 4) + '.');
+          if (number(series.ibc_br && series.ibc_br.value) !== null) parts.push('IBC-Br: ' + format(series.ibc_br.value) + ' (índice conforme SGS).');
+          context.textContent = parts.length ? parts.join(' ') : 'A API respondeu, mas não retornou valores macroeconômicos válidos.';
+          status.textContent = (data.ok === false ? 'PARCIAL' : 'ATUALIZADO') + ' • ' + new Date().toLocaleTimeString('pt-BR');
+          status.className = data.ok === false ? 'text-[9px] text-amber-300 font-mono' : 'text-[9px] text-emerald-400 font-mono';
+        } catch (error) {
+          status.textContent = 'INDISPONÍVEL';
+          status.className = 'text-[9px] text-red-400 font-mono';
+          context.textContent = 'Não foi possível consultar /api/macro: ' + (error.name === 'AbortError' ? 'tempo limite excedido' : error.message) + '. Verifique a publicação do endpoint no Render.';
+        }
+      }
+      loadFeedHealth();
+      loadMacro();
+      setInterval(loadFeedHealth, 15000);
+      setInterval(loadMacro, 15 * 60 * 1000);
+    })();
+    </script>
+
+</body>
+</html>
