@@ -8,7 +8,8 @@
     
     <meta name="google-site-verification" content="I1Muk1Q6J7nsZQidFcnnGXBCzKmbm1dWMMyo2whgUM4" />
     
-    <meta name="description" content="Consultoria, assessoria e projetos de engenharia de telecomunicações em Rio Branco, Acre, liderada pelo Eng. Alan Queiroz da Silva (CREA/PA 14.414-D).">
+    <!-- Meta Description ajustada para remover "liderada" -->
+    <meta name="description" content="Consultoria, assessoria e projetos de engenharia de telecomunicações em Rio Branco, Acre, pelo Eng. Alan Queiroz da Silva (CREA/PA 14.414-D).">
     
     <meta name="keywords" content="engenheiro telecomunicações rio branco, outorga anatel acre, projeto rede fibra optica, consultoria tic, alan silva engenheiro, homologacao drone anatel rpa">
     <meta name="author" content="Alan Queiroz da Silva">
@@ -21,12 +22,15 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome para Ícones de Engenharia e Drone -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         .mask-gradient { mask-image: linear-gradient(to bottom, black 85%, transparent); }
         html { scroll-behavior: smooth; }
         .logo-ajustada {
-            transform: scale(1.09); 
+            /* Aumento da logo de 1.09 para 1.11 (+2%) */
+            transform: scale(1.11); 
             transform-origin: center;
         }
         
@@ -187,8 +191,8 @@
                     <h2 class="text-4xl font-black mb-8 italic uppercase tracking-tighter">Sobre a <span class="text-cyan-500">Consultoria</span></h2>
                     <div class="space-y-6 text-slate-300 leading-relaxed text-lg">
                         <p>
-                            Com mais de <strong>18 anos de experiência</strong>, a <strong>ACPTelecom - Alan Consultoria e Projetos de Telecomunicações</strong> oferece soluções completas em engenharia para empresas e órgãos públicos. 
-                            Nossa atuação reúne sólida vivência em infraestrutura e redes, além de suporte regulatório e técnico em demandas de outorgas e regularização de equipamentos.
+                            Com mais de <strong>18 anos de experiência</strong>, a <strong>ACPTelecom - Alan Consultoria e Projetos de Telecomunicações</strong> é liderada por um engenheiro especialista dedicado a entregar resultados de alta performance. 
+                            Atuando como profissional liberal autônomo, nosso compromisso é oferecer atendimento personalizado e soluções técnicas rigorosas para empresas privadas, reunindo sólida vivência em infraestrutura de redes e suporte técnico avançado.
                         </p>
                         
                         <!-- INÍCIO DO BLOCO OCULTO (ACORDEÃO) -->
@@ -220,21 +224,34 @@
         <div class="container mx-auto px-6">
             <h2 class="text-4xl font-black text-center mb-16 tracking-tighter uppercase italic">Soluções <span class="text-cyan-500">Engenharia</span></h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                
+                <!-- Card 1 -->
                 <div class="group p-8 bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl hover:border-cyan-500/50 transition-all duration-500">
-                    <div class="w-16 h-16 bg-cyan-500/10 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 group-hover:bg-cyan-500 transition shadow-lg">📡</div>
+                    <div class="w-16 h-16 bg-cyan-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-cyan-500 transition shadow-lg">
+                        <i class="fa-solid fa-network-wired text-3xl text-cyan-400 group-hover:text-white transition-colors"></i>
+                    </div>
                     <h3 class="font-bold text-xl mb-4 text-white">Consultoria e Projetos</h3>
                     <p class="text-slate-400 text-sm leading-relaxed">Projetos de infraestrutura de telecomunicações, redes ópticas, especificações técnicas, dimensionamento de sistemas e assessoria em TICs.</p>
                 </div>
+
+                <!-- Card 2 -->
                 <div class="group p-8 bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl hover:border-cyan-500/50 transition-all duration-500">
-                    <div class="w-16 h-16 bg-cyan-500/10 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 group-hover:bg-cyan-500 transition shadow-lg">⚖️</div>
+                    <div class="w-16 h-16 bg-cyan-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-cyan-500 transition shadow-lg">
+                        <i class="fa-solid fa-scale-balanced text-3xl text-cyan-400 group-hover:text-white transition-colors"></i>
+                    </div>
                     <h3 class="font-bold text-xl mb-4 text-white">Outorgas Anatel</h3>
                     <p class="text-slate-400 text-sm leading-relaxed">Assessoria regulatória e documental para processos de outorga (SCM, STFC e SeAC) e suporte cadastral/licenciamento junto aos sistemas da Anatel (Mosaico e SEI).</p>
                 </div>
+
+                <!-- Card 3 (Ícone de Drone) -->
                 <div class="group p-8 bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl hover:border-cyan-500/50 transition-all duration-500">
-                    <div class="w-16 h-16 bg-cyan-500/10 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 group-hover:bg-cyan-500 transition shadow-lg">🚁</div>
+                    <div class="w-16 h-16 bg-cyan-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-cyan-500 transition shadow-lg">
+                        <i class="fa-solid fa-drone text-3xl text-cyan-400 group-hover:text-white transition-colors"></i>
+                    </div>
                     <h3 class="font-bold text-xl mb-4 text-white">Homologação Drones</h3>
                     <p class="text-slate-400 text-sm leading-relaxed">Suporte técnico na regularização de equipamentos de radiocomunicação de drones (RPA) perante a Anatel e orientação de cadastro operacional (SISANT/ANAC e SARPAS/DECEA).</p>
                 </div>
+
             </div>
         </div>
     </section>
@@ -249,6 +266,20 @@
                         <textarea id="msg-contato" placeholder="Fale sobre seu projeto, outorga Anatel ou regularização de drone (RPA)" rows="4" required class="w-full bg-white/5 border border-white/10 p-4 rounded-xl focus:outline-none focus:border-cyan-500 transition text-white"></textarea>
                         <button type="submit" class="w-full bg-cyan-600 py-4 rounded-xl font-black uppercase tracking-widest shadow-lg hover:bg-cyan-500 transition hover:shadow-cyan-500/50">Enviar Mensagem</button>
                     </form>
+
+                    <!-- Bloco de Horário de Atendimento -->
+                    <div class="mt-8 bg-cyan-900/20 border border-cyan-500/30 p-6 rounded-2xl">
+                        <h4 class="text-white font-bold text-lg mb-2 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Horário de Atendimento
+                        </h4>
+                        <p class="text-sm text-slate-400 mb-3">Por se tratar de consultoria autônoma, os atendimentos são realizados exclusivamente fora do horário de expediente:</p>
+                        <ul class="text-sm text-slate-300 space-y-1 font-medium">
+                            <li>• Segunda a Sexta: <strong class="text-cyan-400">18:00 às 20:00</strong></li>
+                            <li>• Sábados: <strong class="text-cyan-400">08:00 às 12:00</strong></li>
+                        </ul>
+                    </div>
+
                 </div>
                 <div class="bg-slate-800 relative h-[400px] lg:h-auto">
                     <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1973.8907208641503!2d-67.8571514!3d-9.9800346!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x917f8e7f89ab40a9%3A0x7bc025f7935bdf0a!2sR.%20Tiradentes%2C%20158%20-%20Vilage%20Tiradentes%2C%20Rio%20Branco%20-%20AC%2C%2069914-090!5e0!3m2!1spt-BR!2sbr!4v1700000000000!5m2!1spt-BR!2sbr" class="absolute inset-0 w-full h-full opacity-90 hover:opacity-100 transition-opacity duration-300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Localização ACPTelecom"></iframe>
@@ -257,7 +288,7 @@
         </div>
     </section>
 
-    <!-- RODAPÉ ATUALIZADO -->
+    <!-- RODAPÉ -->
     <footer class="py-12 text-center text-slate-500 text-[10px] tracking-[0.3em] uppercase">
         <p class="mb-2 text-slate-400 font-bold">&copy; 2027 ACPTelecom – Alan Consultoria e Projetos de Telecomunicações</p>
         <p class="mb-2 text-[9px]">Profissional Liberal em Engenharia de Telecomunicações</p>
